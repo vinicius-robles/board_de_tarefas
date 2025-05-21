@@ -2,9 +2,11 @@ package com.board.ui;
 
 import com.board.persistence.entity.BoardColumnEntity;
 import com.board.persistence.entity.BoardEntity;
+import com.board.persistence.entity.CardEntity;
 import com.board.service.BoardColumnQueryService;
 import com.board.service.BoardQueryService;
 import com.board.service.CardQueryService;
+import com.board.service.CardService;
 import lombok.AllArgsConstructor;
 
 import java.sql.SQLException;
@@ -56,10 +58,29 @@ public class BoardMenu {
         }
     }
 
-    private void createCard() {
+    private void createCard() throws SQLException{
+        var card = new CardEntity();
+        System.out.println("Informe o título do card");
+        card.setTitle(scanner.next());
+        System.out.println("Informe a descrição do card");
+        card.setDescription(scanner.next());
+        card.setBoardColumn(entity.getInitialColumn());
+        try(var connection = getConnection()){
+            new CardService(connection).create(card);
+        }
     }
 
-    private void moveCardToNextColumn() {
+    private void moveCardToNextColumn() throws SQLException {
+        System.out.println("Informe o id do card que deseja mover para a próxima coluna");
+        var cardId = scanner.nextLong();
+        var boardColumnsInfo = entity.getBoardColumns().stream()
+                .map(bc -> new BoardColumnInfoDTO(bc.getId(), bc.getOrder(), bc.getKind()))
+                .toList();
+        try(var connection = getConnection()){
+            new CardService(connection).moveToNextColumn(cardId, boardColumnsInfo);
+        } catch (RuntimeException ex){
+            System.out.println(ex.getMessage());
+        }
     }
 
     private void blockCard() {
